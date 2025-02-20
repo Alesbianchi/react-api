@@ -18,6 +18,12 @@ const PostsForm = () => {
         fetchPosts();
     }, []);
 
+    const removePost = (id) => {
+        axios.delete(`http://localhost:3000/posts/${id}`)
+            .then(() => {
+                setPosts(posts.filter(post => post.id !== id));
+            })
+    };
 
 
     return (
