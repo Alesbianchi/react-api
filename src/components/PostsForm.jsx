@@ -3,10 +3,10 @@ import axios from "axios";
 
 
 const initialFormData = {
-    titolo: "",
-    autore: "",
-    contenuto: "",
-    categoria: "",
+    title: "",
+    content: "",
+    image: "",
+    tags: [],
 
 };
 
@@ -16,7 +16,7 @@ const PostsForm = () => {
     const [formData, setFormData] = useState(initialFormData);
 
     function handleFormData(e) {
-        const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+        const value = e.target.name === "tags" ? e.target.value.split(",") : e.target.value;
 
         setFormData((currentFormData) => ({
             ...currentFormData, [e.target.name]: value,
@@ -26,13 +26,14 @@ const PostsForm = () => {
 
     function handleSubmit(e) {
         e.preventDefault();
-        setPosts((currentPosts) => [...currentPosts, {
-            id: currentPosts.length > 0 ? currentPosts[currentPosts.length - 1].id + 1 : 1,
-            ...formData
-        }]);
-
-        // Reset del form
-        setFormData(initialFormData);
+        axios.post("http://localhost:3000/posts", formData)
+            .then((res) => {
+                setPosts((currentPosts) => [...currentPosts, res.data]);
+                setFormData(initialFormData); // Reset del form
+            })
+            .catch((err) => {
+                console.error("Errore nell'aggiunta del post:", err);
+            });
     }
     // Funzione per ottenere i post dal backend
     function fetchPosts() {
@@ -44,9 +45,7 @@ const PostsForm = () => {
             })
     }
 
-    useEffect(() => {
-        fetchPosts();
-    }, []);
+    useEffect(fetchPosts, []);
 
     const removePost = (id) => {
         axios.delete(`http://localhost:3000/posts/${id}`)
@@ -63,59 +62,46 @@ const PostsForm = () => {
             <form id='formpost' action="#" onSubmit={handleSubmit} >
                 <input
                     type="text"
-                    name="titolo"
+                    name="title"
                     onChange={handleFormData}
-                    value={formData.titolo}
+                    value={formData.title}
                     placeholder='Nome post'
                 />
 
-                <input
-                    type="text"
-                    name="autore"
-                    onChange={handleFormData}
-                    value={formData.autore}
-                    placeholder='autore post'
-                />
-
                 <textarea
-                    type="text"
-                    name="contenuto"
+                    name="content"
                     onChange={handleFormData}
-                    value={formData.contenuto}
+                    value={formData.content}
                     placeholder='contenuto post'
                 ></textarea>
 
                 <input
                     type="text"
-                    name="categoria"
+                    name="image"
                     onChange={handleFormData}
-                    value={formData.categoria}
-                    placeholder='categoria post'
+                    value={formData.image}
+                    placeholder="image post"
+                />
+
+                <input
+                    type="text"
+                    name="tags"
+                    onChange={handleFormData}
+                    value={formData.tags}
+                    placeholder='tags dei post'
                 />
                 <button>Aggiungi post</button>
             </form>
-            {
-                posts.map((post) => (
-                    <div key={post.id}>
-                        <h2>{post.titolo}</h2>
-                        <h3>{post.autore}</h3>
-                        <p>{post.contenuto}</p>
-                        <div>{post.categoria}</div>
 
-                    </div>
-                ))
-
-            }
             {posts.length === 0 ? (
                 <h1>Non ci sono posts</h1>
             ) : (
                 posts.map((post) => (
                     <div key={post.id}>
                         <h2>{post.title}</h2>
-                        <img src={post.image} alt={post.title} />
-                        <h4>{post.autore}</h4>
+                        <img src={post.image} />
                         <p>{post.content}</p>
-                        <p>{post.tags.join(", ")}</p>
+                        <p>{post.tags.join(', ')}</p>
                         <button onClick={() => removePost(post.id)}>Cancella Post</button>
                     </div>
                 ))
